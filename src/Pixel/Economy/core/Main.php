@@ -111,9 +111,6 @@ class Main extends PluginBase
                 }
 
                 return true;
-            } else if ($player->hasPermission("economy.admin")) {
-
-                return true;
             } else if ($player->hasPermission("economy.user")) {
 
                 return true;
