@@ -1,0 +1,19 @@
+name: SmallEconomy
+author: Pixel
+main: Pixel\economy\core\Main
+version: 0.1.0
+api:
+  - 4.0.0
+description: Its a small economy plugin.
+
+commands:
+  money:
+    description: "Manages your account"
+    usage: "/money help"
+
+permissions:
+  economy.owner:
+    default: op
+    description: "owner permission"
+  economy.user:
+    description: "user permission"
