@@ -15,6 +15,7 @@ use pocketmine\utils\TextFormat;
 class Main extends PluginBase
 {
     public $data;
+    public $config;
     public LocalGetter $getter;
 
     public function onLoad(): void
@@ -27,13 +28,19 @@ class Main extends PluginBase
         $this->getServer()->getLogger()->info(TextFormat::RED . "Enabling Economy plugin");
 
         $this->data = new Config($this->getDataFolder() . "data.yml", Config::YAML);
+        $this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML);
+
+        $this->data->save();
+        $this->config->save();
         $this->saveDefaultConfig();
+
         $this->getter = new LocalGetter($this);
     }
 
     public function onDisable(): void
     {
-        $this->saveConfig();
+        $this->data->save();
+        $this->config->save();
     }
 
     public function onCommand(CommandSender $sender, Command $cmd, string $label, array $args): bool
@@ -46,6 +53,8 @@ class Main extends PluginBase
             TextFormat::YELLOW . "/money remove <player> <amount>" .
             TextFormat::YELLOW . "/money delete <player>" .
             TextFormat::YELLOW . "/money reset";
+
+
         /**************  IN-GAME  **************/
         if ($sender instanceof Player) {
             $player = $this->getServer()->getPlayerByPrefix($sender->getName());
@@ -208,6 +217,8 @@ class Main extends PluginBase
         /**************  CONSOLE  **************/
         else {
             if ($cmd->getName() == "money") {
+
+                $sender->sendMessage("NOT YET IMPLEMENTED");
             }
         }
 
