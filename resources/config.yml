@@ -2,7 +2,7 @@
 # %lgcoin_balance% - Returns Player token
 
 database:
-  backup: false # When MySQL is not working it will use sqlite database instead. [Backups are made automatically]
+  backup: false # When MySQL is not working it will use data.yml database instead. [Backups are made automatically]
 
   mysql:
     # Host IP
