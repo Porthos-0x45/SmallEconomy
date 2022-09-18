@@ -53,69 +53,81 @@ class Main extends PluginBase
             if ($player->hasPermission("economy.owner")) {
 
                 if ($cmd->getName() == "money") {
-                    if (count($args) == 0) {
+                    if ($player->hasPermission("economy.owner")) {
+                        if (count($args) == 0) {
 
-                        $player->sendMessage($help);
-                    } else if (count($args) > 0 && count($args) <= 2) {
-                        if ($args[0] == "balance") {
-                            if (count($args) == 1) {
-                                $player->sendMessage(TextFormat::GREEN . "Your account balance is: " . TextFormat::BLUE . (string)$this->getter->getBalance($player->getName()) . "$");
-                            } else {
+                            $player->sendMessage($help);
+                        } else if (count($args) > 0 && count($args) <= 2) {
+                            if ($args[0] == "balance") {
+                                if (count($args) == 1) {
+                                    $player->sendMessage(TextFormat::GREEN . "Your account balance is: " . TextFormat::BLUE . (string)$this->getter->getBalance($player->getName()) . "$");
+                                } else {
+                                    $name = $args[1];
+
+                                    $player->sendMessage(TextFormat::GREEN . "Account Balance of. " . $name . " is: " . TextFormat::BLUE . (string)$this->getter->getBalance($name) . "$");
+                                }
+                            } else if ($args[0] == "delete" && count($args) == 2) {
+
                                 $name = $args[1];
 
-                                $player->sendMessage(TextFormat::GREEN . "Account Balance of. " . $name . " is: " . TextFormat::BLUE . (string)$this->getter->getBalance($name) . "$");
+                                $this->getter->delete($name);
+                                $player->sendMessage(TextFormat::RED . "You deleted " . $name . " bank account!");
+                            } else if ($args[0] == "reset") {
+                                $this->getter->reset();
+                            } else {
+                                $player->sendMessage($help);
+                                return true;
                             }
-                        } else if ($args[0] == "delete" && count($args) == 2) {
+                        } else if (count($args) == 3) {
 
-                            $name = $args[1];
+                            if ($args[0] == "pay") {
 
-                            $this->getter->delete($name);
-                            $player->sendMessage(TextFormat::RED . "You deleted " . $name . " bank account!");
-                        } else if ($args[0] == "reset") {
-                            $this->getter->reset();
+                                $name = $args[1];
+                                $amount = (int) $args[2];
+
+                                $this->getter->pay($player->getName(), $name, $amount);
+                                $player->sendMessage(TextFormat::YELLOW . "You payed " . TextFormat::BLUE . $amount . TextFormat::YELLOW . "$ to " . $name);
+                            } else if ($args[0] == "set") {
+
+                                $name = $args[1];
+                                $amount = (int) $args[2];
+
+                                $this->getter->set($name, $amount);
+                                $player->sendMessage(TextFormat::RED . "You have set the account balance of " . $name . " to " . TextFormat::BLUE . $amount . "$");
+                            } else if ($args[0] == "remove") {
+
+                                $name = $args[1];
+                                $amount = (int) $args[2];
+
+                                $this->getter->remove($name, $amount);
+                                $player->sendMessage(TextFormat::RED . "You have removed " . TextFormat::BLUE . $amount . "$" . TextFormat::RED . " from " . $name);
+                            } else {
+                                $player->sendMessage($help);
+                                return true;
+                            }
                         } else {
                             $player->sendMessage($help);
                             return true;
                         }
-                    } else if (count($args) == 3) {
-
-                        if ($args[0] == "pay") {
-
-                            $name = $args[1];
-                            $amount = (int) $args[2];
-
-                            $this->getter->pay($player->getName(), $name, $amount);
-                            $player->sendMessage(TextFormat::YELLOW . "You payed " . TextFormat::BLUE . $amount . TextFormat::YELLOW . "$ to " . $name);
-                        } else if ($args[0] == "set") {
-
-                            $name = $args[1];
-                            $amount = (int) $args[2];
-
-                            $this->getter->set($name, $amount);
-                            $player->sendMessage(TextFormat::RED . "You have set the account balance of " . $name . " to " . TextFormat::BLUE . $amount . "$");
-                        } else if ($args[0] == "remove") {
-
-                            $name = $args[1];
-                            $amount = (int) $args[2];
-
-                            $this->getter->remove($name, $amount);
-                            $player->sendMessage(TextFormat::RED . "You have removed " . TextFormat::BLUE . $amount . "$" . TextFormat::RED . " from " . $name);
-                        } else {
-                            $player->sendMessage($help);
-                            return true;
-                        }
-                    } else {
-                        $player->sendMessage($help);
-                        return true;
                     }
                 }
 
                 return true;
             } else if ($player->hasPermission("economy.user")) {
 
+                if ($cmd->getName() == "money") {
+                    if (count($args) == 0) {
+                    } else if (count($args) > 0 && count($args) <= 3) {
+                    } else {
+                        $sender->sendMessage($nocmd);
+                    }
+                }
+
                 return true;
             } else {
                 $sender->sendMessage($nocmd);
+
+                return true;
             }
         }
 
