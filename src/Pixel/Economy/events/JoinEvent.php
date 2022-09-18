@@ -23,7 +23,6 @@ class JoinEvent implements Listener
     {
         $player = $event->getPlayer();
 
-        $this->getter->createAccount($player->getName());
-        $player->sendMessage(TextFormat::DARK_GREEN . "Your bank account has been created.");
+        $this->getter->createAccount($player);
     }
 }
