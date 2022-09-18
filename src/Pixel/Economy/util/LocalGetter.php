@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Pixel\Economy\core;
+namespace Pixel\Economy\util;
 
+use Pixel\Economy\core\Main;
 use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
+
 
 class LocalGetter
 {
@@ -36,7 +38,13 @@ class LocalGetter
     public function pay(string $self_uuid, string $send_uuid, int $amount)
     {
         $this->plugin->data->setNested(base64_encode($self_uuid) . "MONEY", $this->getBalance(base64_encode($self_uuid)) - $amount);
-        $this->plugin->data->setNested(base64_encode($send_uuid) . "MONEY", $amount);
+        $this->plugin->data->setNested(base64_encode($send_uuid) . "MONEY", $this->getBalance(base64_encode($send_uuid)) + $amount);
+        $this->plugin->data->save();
+    }
+
+    public function add(string $uuid, int $amount)
+    {
+        $this->plugin->data->setNested(base64_encode($uuid) . "MONEY", $amount);
         $this->plugin->data->save();
     }
 

@@ -4,6 +4,7 @@ declare(strick_types=1);
 
 namespace Pixel\Economy\core;
 
+use Pixel\Economy\util\LocalGetter;
 use pocketmine\block\Planks;
 use pocketmine\command\CommandSender;
 use pocketmine\command\Command;
@@ -116,6 +117,22 @@ class Main extends PluginBase
 
                                 $this->getter->pay($player->getName(), $name, $amount);
                                 $player->sendMessage(TextFormat::YELLOW . "You payed " . TextFormat::BLUE . $amount . TextFormat::YELLOW . "$ to " . $name);
+                            } else if ($args[0] == "add") {
+
+                                $name = $args[1];
+                                $amount = (int) $args[2];
+
+                                if (!$this->getter->accountExists($name)) {
+                                    $sender->sendMessage(TextFormat::RED . $name . " has no bank account!");
+                                    return true;
+                                }
+                                if (!is_numeric($amount)) {
+                                    $sender->sendMessage(TextFormat::RED . $amount . " is not a number!");
+                                    return true;
+                                }
+
+                                $this->getter->add($name, $amount);
+                                $sender->sendMessage(TextFormat::YELLOW . "You added " . TextFormat::BLUE . $amount . TextFormat::YELLOW . "$ to " . $name);
                             } else if ($args[0] == "set") {
 
                                 $name = $args[1];
@@ -218,7 +235,99 @@ class Main extends PluginBase
         else {
             if ($cmd->getName() == "money") {
 
-                $sender->sendMessage("NOT YET IMPLEMENTED");
+                if (count($args) == 0) {
+
+                    $sender->sendMessage($help);
+                } else if (count($args) > 0 && count($args) <= 2) {
+                    if ($args[0] == "balance") {
+                        if (count($args) == 1) {
+                            $sender->sendMessage($help);
+                        } else if (count($args) == 2) {
+                            $name = $args[1];
+
+                            if ($this->getter->accountExists($name))
+                                $sender->sendMessage(TextFormat::GREEN . "Account Balance of. " . $name . " is: " . TextFormat::BLUE . (string)$this->getter->getBalance($name) . "$");
+                            else
+                                $sender->sendMessage(TextFormat::RED . $name . " has no bank account!");
+                        } else {
+                            $sender->sendMessage($help);
+                        }
+                    } else if ($args[0] == "help") {
+                        $sender->sendMessage($help);
+                    } else if ($args[0] == "delete" && count($args) == 2) {
+
+                        $name = $args[1];
+
+                        if ($this->getter->accountExists($name)) {
+                            $this->getter->delete($name);
+                            $sender->sendMessage(TextFormat::RED . "You deleted " . $name . " bank account!");
+                        } else {
+                            $sender->sendMessage(TextFormat::RED . $name . " has no bank account!");
+                        }
+                    } else if ($args[0] == "reset") {
+                        $this->getter->reset();
+                    } else {
+                        $sender->sendMessage($help);
+                        return true;
+                    }
+                } else if (count($args) == 3) {
+
+                    if ($args[0] == "add") {
+
+                        $name = $args[1];
+                        $amount = (int) $args[2];
+
+                        if (!$this->getter->accountExists($name)) {
+                            $sender->sendMessage(TextFormat::RED . $name . " has no bank account!");
+                            return true;
+                        }
+                        if (!is_numeric($amount)) {
+                            $sender->sendMessage(TextFormat::RED . $amount . " is not a number!");
+                            return true;
+                        }
+
+                        $this->getter->add($name, $amount);
+                        $sender->sendMessage(TextFormat::YELLOW . "You added " . TextFormat::BLUE . $amount . TextFormat::YELLOW . "$ to " . $name);
+                    } else if ($args[0] == "set") {
+
+                        $name = $args[1];
+                        $amount = (int) $args[2];
+
+                        if (!$this->getter->accountExists($name)) {
+                            $sender->sendMessage(TextFormat::RED . $name . " has no bank account!");
+                            return true;
+                        }
+                        if (!is_numeric($amount)) {
+                            $sender->sendMessage(TextFormat::RED . $amount . " is not a number!");
+                            return true;
+                        }
+
+                        $this->getter->set($name, $amount);
+                        $sender->sendMessage(TextFormat::RED . "You have set the account balance of " . $name . " to " . TextFormat::BLUE . $amount . "$");
+                    } else if ($args[0] == "remove") {
+
+                        $name = $args[1];
+                        $amount = (int) $args[2];
+
+                        if (!$this->getter->accountExists($name)) {
+                            $sender->sendMessage(TextFormat::RED . $name . " has no bank account!");
+                            return true;
+                        }
+                        if (!is_numeric($amount)) {
+                            $sender->sendMessage(TextFormat::RED . $amount . " is not a number!");
+                            return true;
+                        }
+
+                        $this->getter->remove($name, $amount);
+                        $sender->sendMessage(TextFormat::RED . "You have removed " . TextFormat::BLUE . $amount . "$" . TextFormat::RED . " from " . $name);
+                    } else {
+                        $sender->sendMessage($help);
+                        return true;
+                    }
+                } else {
+                    $sender->sendMessage($help);
+                    return true;
+                }
             }
         }
 

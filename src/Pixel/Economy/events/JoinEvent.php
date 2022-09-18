@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Pixel\Economy\events;
 
-use Pixel\Economy\core\LocalGetter;
+use Pixel\Economy\util\LocalGetter;
 use Pixel\Economy\core\Main;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
