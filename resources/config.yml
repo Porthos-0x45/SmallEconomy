@@ -16,6 +16,8 @@ database:
     # Password
     password: ""
 
+use-database: false
+
 # Show/hide message when set player tokens
 set-message: false
 

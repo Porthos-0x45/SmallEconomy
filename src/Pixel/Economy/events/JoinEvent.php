@@ -8,7 +8,6 @@ use Pixel\Economy\util\LocalGetter;
 use Pixel\Economy\core\Main;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerJoinEvent;
-use pocketmine\utils\TextFormat;
 
 class JoinEvent implements Listener
 {

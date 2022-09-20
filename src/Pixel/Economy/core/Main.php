@@ -4,8 +4,11 @@ declare(strick_types=1);
 
 namespace Pixel\Economy\core;
 
+use Pixel\Economy\events\JoinEvent;
+use Pixel\Economy\logs\Logging;
+use Pixel\Economy\sql\MySQL;
+use Pixel\Economy\sql\SQLGetter;
 use Pixel\Economy\util\LocalGetter;
-use pocketmine\block\Planks;
 use pocketmine\command\CommandSender;
 use pocketmine\command\Command;
 use pocketmine\player\Player;
@@ -17,7 +20,13 @@ class Main extends PluginBase
 {
     public $data;
     public $config;
+    public $log_file;
+
     public LocalGetter $getter;
+    public MySQL $mySql;
+    //public SQLGetter $sqlGetter;
+
+    public Logging $logs;
 
     public function onLoad(): void
     {
@@ -28,6 +37,8 @@ class Main extends PluginBase
     {
         $this->getServer()->getLogger()->info(TextFormat::RED . "Enabling Economy plugin");
 
+        $this->getServer()->getPluginManager()->registerEvents(new JoinEvent($this), $this);
+
         $this->data = new Config($this->getDataFolder() . "data.yml", Config::YAML);
         $this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML);
 
@@ -36,6 +47,11 @@ class Main extends PluginBase
         $this->saveDefaultConfig();
 
         $this->getter = new LocalGetter($this);
+        $this->mySql = new MySQL($this);
+
+        if ($this->config->get("use-database") == true) {
+            $this->mySql->connect();
+        }
     }
 
     public function onDisable(): void
