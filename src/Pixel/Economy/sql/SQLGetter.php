@@ -9,9 +9,6 @@ use Pixel\Economy\core\Main;
 use pocketmine\player\Player;
 use pocketmine\utils\TextFormat;
 
-
-/************** THIS IS INCOMPLETED **************/
-
 class SQLGetter
 {
     private function __construct(private Main $plugin)
@@ -22,115 +19,219 @@ class SQLGetter
     {
         $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
 
-        if ($this->conn->query($sql) === TRUE) {
-
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
+    }
+
+    public function createAccount($uuid, $name)
+    {
+        $sql = "INSERT IGNORE INTO tokentbl (NAME,UUID) VALUES (?, ?)";
+
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("ss", $name, $uuid);
+        $stmt->execute();
+
+        $stmt->close();
+        $this->plugin->mySql->disconnect();
+    }
+
+    public function getName($uuid): string
+    {
+        $sql = "SELECT NAME FROM tokentbl WHERE UUID=?";
+
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
+        }
+
+        if (!$this->accountExists($uuid)) {
+            return null;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("ss", $name, (string) $uuid);
+        $stmt->execute();
+
+        $result = (string) $stmt->get_result();
+
+        $stmt->close();
+        $this->plugin->mySql->disconnect();
+
+        return $result;
     }
 
     public function accountExists($uuid): bool
     {
-        $sql = "SELECT * FROM tokentbl WHERE UUID={$uuid}";
+        $player = $this->plugin->getServer()->getPlayerByRawUUID($uuid);
 
-        if ($this->conn->query($sql) === TRUE) {
+        $sql = "SELECT * FROM tokentbl WHERE UUID=?";
 
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("s", $uuid);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        if ($result != null)
+            return true;
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
 
-        return $this->plugin->data->exists($uuid);
+        $player->sendMessage(TextFormat::RED . "This player does not exists");
+
+        return false;
     }
 
     public function getBalance(string $uuid): int
     {
-        $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
+        $sql = "SELECT TOKENS FROM tokentbl WHERE UUID=?";
 
-        if ($this->conn->query($sql) === TRUE) {
-
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        if (!$this->accountExists($uuid)) {
+            return null;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("s", $uuid);
+        $stmt->execute();
+
+        $result = $stmt->get_result();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
 
-        return $this->plugin->data->getNested(base64_encode($uuid))["MONEY"];
+        return (int) $result;
     }
 
     public function pay(string $self_uuid, string $send_uuid, int $amount)
     {
-        $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
+        $sql = "UPDATE tokentbl SET TOKENS=? WHERE UUID=?";
 
-        if ($this->conn->query($sql) === TRUE) {
+        // send transaction template
+        $uuid = $send_uuid;
+        $send = $this->getBalance($uuid) + $amount;
 
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        if (!$this->accountExists($uuid)) {
+            return;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("is", $send, $uuid);
+
+        // send first transaction
+        $stmt->execute();
+
+        // fetch transaction
+        $uuid = $self_uuid;
+        $send = $this->getBalance($uuid) - $amount;
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
     }
 
     public function add(string $uuid, int $amount)
     {
-        $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
+        $sql = "UPDATE tokentbl SET TOKENS=? WHERE UUID=?";
 
-        if ($this->conn->query($sql) === TRUE) {
-
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        if (!$this->accountExists($uuid)) {
+            return;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("is", $send, $uuid);
+
+        // send transaction
+        $send = $this->getBalance($uuid) + $amount;
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
     }
 
     public function set(string $uuid, int $amount)
     {
-        $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
+        $sql = "UPDATE tokentbl SET TOKENS=? WHERE UUID=?";
 
-        if ($this->conn->query($sql) === TRUE) {
-
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        if (!$this->accountExists($uuid)) {
+            return null;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("is", $amount, $uuid);
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
     }
 
     public function remove(string $uuid, int $amount)
     {
-        $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
+        $sql = "UPDATE tokentbl SET TOKENS=? WHERE UUID=?";
 
-        if ($this->conn->query($sql) === TRUE) {
-
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        if (!$this->accountExists($uuid)) {
+            return null;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("is", $this->getBalance($uuid) - $amount, $uuid);
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
     }
 
     public function delete(string $uuid)
     {
-        $sql = "CREATE TABLE IF NOT EXISTS tokentbl (NAME VARCHAR(100),UUID VARCHAR(100),TOKENS INT(100),PRIMARY KEY (NAME))";
+        $sql = "DELETE FROM tokentbl WHERE UUID=?";
 
-        if ($this->conn->query($sql) === TRUE) {
-
-            $this->plugin->getServer()->getLogger()->info(TextFormat::GREEN . "Database created successfully");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        if (!$this->accountExists($uuid)) {
+            return null;
+        }
+
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->bind_param("s", $uuid);
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
     }
 
@@ -138,12 +239,14 @@ class SQLGetter
     {
         $sql = "DROP TABLE IF EXISTS shop, shopstate, tokentbl";
 
-        if ($this->conn->query($sql) === TRUE) {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Database reset successfull");
-        } else {
-            $this->plugin->getServer()->getLogger()->info(TextFormat::RED . "Error creating database: " . $this->plugin->mySql->connection()->error);
+        if (!$this->plugin->mySql->isConnected()) {
+            $this->plugin->mySql->connect();
         }
 
+        $stmt = $this->plugin->mySql->connection()->prepare($sql);
+        $stmt->execute();
+
+        $stmt->close();
         $this->plugin->mySql->disconnect();
     }
 }

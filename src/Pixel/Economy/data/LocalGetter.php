@@ -32,37 +32,37 @@ class LocalGetter
 
     public function getBalance(string $uuid): int
     {
-        return $this->plugin->data->getNested(base64_encode($uuid))["MONEY"];
+        return $this->plugin->data->getNested($uuid)["MONEY"];
     }
 
     public function pay(string $self_uuid, string $send_uuid, int $amount)
     {
-        $this->plugin->data->setNested(base64_encode($self_uuid) . "MONEY", $this->getBalance(base64_encode($self_uuid)) - $amount);
-        $this->plugin->data->setNested(base64_encode($send_uuid) . "MONEY", $this->getBalance(base64_encode($send_uuid)) + $amount);
+        $this->plugin->data->setNested($self_uuid . "MONEY", $this->getBalance($self_uuid) - $amount);
+        $this->plugin->data->setNested($send_uuid . "MONEY", $this->getBalance($send_uuid) + $amount);
         $this->plugin->data->save();
     }
 
     public function add(string $uuid, int $amount)
     {
-        $this->plugin->data->setNested(base64_encode($uuid) . "MONEY", $amount);
+        $this->plugin->data->setNested($uuid . "MONEY", $amount);
         $this->plugin->data->save();
     }
 
     public function set(string $uuid, int $amount)
     {
-        $this->plugin->data->setNested(base64_encode($uuid) . "MONEY", $amount);
+        $this->plugin->data->setNested($uuid . "MONEY", $amount);
         $this->plugin->data->save();
     }
 
     public function remove(string $uuid, int $amount)
     {
-        $this->plugin->data->setNested(base64_encode($uuid) . "MONEY", $this->getBalance(base64_encode($uuid)) - $amount);
+        $this->plugin->data->setNested($uuid . "MONEY", $this->getBalance($uuid) - $amount);
         $this->plugin->data->save();
     }
 
     public function delete(string $uuid)
     {
-        $this->plugin->data->remove(base64_encode($uuid));
+        $this->plugin->data->remove($uuid);
         $this->plugin->data->save();
     }
 
